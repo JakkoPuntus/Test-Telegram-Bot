@@ -53,7 +53,7 @@ async def get_comment(message: types.Message, state: FSMContext):
 
     await message.answer('Последний шаг! Ознакомься с вводными положениями')
     await message.answer_document('file_id')
-    await message.answer('Ознакомился?', reply_markup=markups.agreement)
+    await message.answer('Ознакомился?', reply_markup=markups.aggreement)
 
 
 
