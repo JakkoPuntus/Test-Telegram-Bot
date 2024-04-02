@@ -11,7 +11,7 @@ from aiogram import Bot, Dispatcher, types
 from bot.config import TOKEN, ADMIN_ID
 from api.models import User
 from api.requests import create_user
-import bot.markups
+from bot import markups 
 
 
 bot = Bot(token=TOKEN)
