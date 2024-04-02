@@ -52,7 +52,8 @@ async def get_comment(message: types.Message, state: FSMContext):
     state.update_data(comment=message.text)
 
     await message.answer('Последний шаг! Ознакомься с вводными положениями')
-    await message.answer_document('file_id')
+    file = types.FSInputFile('bot/content/test.pdf')
+    await message.answer_document(file)
     await message.answer('Ознакомился?', reply_markup=markups.aggreement)
 
 
@@ -60,9 +61,8 @@ async def get_comment(message: types.Message, state: FSMContext):
 async def get_confirmation(message: types.Message, state: FSMContext):
     if message.text == 'Да!':
 
-        photo = types.InputFile('content/photo.jpg')
+        photo = types.FSInputFile('botm/content/photo.jpg')
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
-        await message.answer_photo('photo_id')
         
         user = User(**await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
@@ -70,7 +70,7 @@ async def get_confirmation(message: types.Message, state: FSMContext):
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
         
-        file = types.InputFile('content/test.jpg')
+        file = types.FSInputFile('bot/content/test.pdf')
         await message.answer_document(file)
         
         await state.set_state(UserState.choosing_comment)
