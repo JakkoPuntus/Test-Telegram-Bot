@@ -8,9 +8,11 @@
 # 8. Заявки приходят на Ваш личный id чата
 
 from aiogram import Bot, Dispatcher, types
-from config import TOKEN, ADMIN_ID
+from bot.config import TOKEN, ADMIN_ID
 from api.models import User
-from api.requests import save_user
+from api.requests import create_user
+import bot.markups
+
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -40,12 +42,12 @@ async def get_comment(message: types.Message, user: User):
 
     await message.answer('Последний шаг! Ознакомься с вводными положениями')
     await message.answer_document('file_id')
-    await message.answer('Далее')
+    await message.answer('Ознакомился?', reply_markup=markups.agreement)
     dp.register_message_handler(get_confirmation, content_types=types.ContentTypes.TEXT, user = user)
 
 async def get_confirmation(message: types.Message, user: User):
-    if message.text == 'Ознакомился':
-        save_user(user) #делаем вид, что сохраняем пользователя в базу данных
+    if message.text == 'Да!':
+        create_user(user) #делаем вид, что сохраняем пользователя в базу данных
 
         photo = types.InputFile('content/photo.jpg')
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
@@ -58,7 +60,6 @@ async def get_confirmation(message: types.Message, user: User):
         file = types.InputFile('content/test.jpg')
         await message.answer_document(file)
         
-        await message.answer('Далее')
         dp.register_message_handler(get_confirmation, content_types=types.ContentTypes.TEXT)
 
 if __name__ == '__main__':
