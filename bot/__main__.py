@@ -67,7 +67,7 @@ async def get_confirmation(message: types.Message, state: FSMContext):
     if message.text == 'Да!':
 
         photo = types.FSInputFile('bot/content/photo.jpg')
-        await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
+        await message.answer_photo(photo, caption='Спасибо за успешную регистрацию', reply_markup = markups.empty)
         print(await state.get_data())
         user = User(** await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
