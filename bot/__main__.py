@@ -51,7 +51,7 @@ async def get_confirmation(message: types.Message, user: User):
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
         await message.answer_photo('photo_id')
 
-        
+        await bot.send_message(ADMIN_ID, f'Пользователь {user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
         
