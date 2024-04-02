@@ -8,7 +8,7 @@
 # 8. Заявки приходят на Ваш личный id чата
 
 from aiogram import Bot, Dispatcher, types
-from config import TOKEN
+from config import TOKEN, ADMIN_ID
 from api.models import User
 from api.requests import save_user
 
@@ -45,12 +45,19 @@ async def get_comment(message: types.Message, user: User):
 
 async def get_confirmation(message: types.Message, user: User):
     if message.text == 'Ознакомился':
-        await message.answer('Спасибо за успешную регистрацию')
         save_user(user) #делаем вид, что сохраняем пользователя в базу данных
+
+        photo = types.InputFile('content/photo.jpg')
+        await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
         await message.answer_photo('photo_id')
+
+        
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
-        await message.answer_document('file_id')
+        
+        file = types.InputFile('content/test.jpg')
+        await message.answer_document(file)
+        
         await message.answer('Далее')
         dp.register_message_handler(get_confirmation, content_types=types.ContentTypes.TEXT)
 
