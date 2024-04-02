@@ -71,12 +71,10 @@ async def get_comment(message: types.Message, state: FSMContext):
 
 @router.message(UserState.finishing)
 async def get_confirmation(message: types.Message, state: FSMContext):
-    print(message.text == 'Да!', message.text)
     if message.text == 'Да!':
 
         photo = types.FSInputFile('bot/content/photo.jpg')
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию', reply_markup = markups.empty)
-        print(await state.get_data())
         user = User(** await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
         await bot.send_message(ADMIN_ID, f'Пришла новая заявка от @{user.username}\nЕго ФИО: {user.fio}\nномер телефона: {user.phone}\nкомментарий: {user.comment}')
