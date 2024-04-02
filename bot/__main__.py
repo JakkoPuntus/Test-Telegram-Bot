@@ -16,6 +16,7 @@ from bot import markups
 from aiogram.filters.command import CommandStart 
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+import re
 
 bot = Bot(token=TOKEN)
 router = Router()
@@ -37,17 +38,24 @@ async def start(message: types.Message, state: FSMContext):
 
 @router.message(UserState.choosing_fio)
 async def get_fio(message: types.Message, state: FSMContext):
-    await state.update_data(fio=message.text)
 
-    await message.answer('Укажите Ваш номер телефона')
-    await state.set_state(UserState.choosing_phone)
+    if not any(char.isdigit() for char in message.text):
+        await state.update_data(fio=message.text)
+
+        await message.answer('Укажите Ваш номер телефона (в формате 7 999 999 99 99)')
+        await state.set_state(UserState.choosing_phone)
+    else:
+        await message.answer('ФИО не должно содержать цифры')
 
 @router.message(UserState.choosing_phone)
 async def get_phone(message: types.Message, state: FSMContext):
-    await state.update_data(phone=message.text)
+    if re.match(r'^7\s\d{3}\s\d{3}\s\d{2}\s\d{2}$', message.text):
+        await state.update_data(phone=message.text)
 
-    await message.answer('Напишите любой комментарий')
-    await state.set_state(UserState.choosing_comment)
+        await message.answer('Напишите любой комментарий')
+        await state.set_state(UserState.choosing_comment)
+    else:
+        await message.answer('Номер телефона должен быть в формате 7 999 999 99 99')
 
 @router.message(UserState.choosing_comment)
 async def get_comment(message: types.Message, state: FSMContext):
@@ -71,7 +79,7 @@ async def get_confirmation(message: types.Message, state: FSMContext):
         print(await state.get_data())
         user = User(** await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
-        await bot.send_message(ADMIN_ID, f'Пользователь @{user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
+        await bot.send_message(ADMIN_ID, f'Пришла новая заявка от @{user.username}\nЕго ФИО: {user.fio}\nномер телефона: {user.phone}\nкомментарий: {user.comment}')
 
         await state.clear()
     else:
@@ -80,7 +88,6 @@ async def get_confirmation(message: types.Message, state: FSMContext):
         file = types.FSInputFile('bot/content/test.pdf')
         await message.answer_document(file)
         
-        await state.set_state(UserState.choosing_comment)
 
     
 
