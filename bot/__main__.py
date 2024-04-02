@@ -7,52 +7,65 @@
 # 7. Последнее сообщение: «Спасибо за успешную регистрацию» + фото (отправлю вместе с заданием)
 # 8. Заявки приходят на Ваш личный id чата
 
-from aiogram import Bot, Dispatcher, types
+import asyncio
+from aiogram import Bot, Dispatcher, types, Router
 from bot.config import TOKEN, ADMIN_ID
 from api.models import User
 from api.requests import create_user
 from bot import markups 
-
+from aiogram.filters.command import CommandStart 
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+router = Router()
 
-@dp.message_handler(commands=['start'])
-async def start(message: types.Message):
-    user = User(user_id=message.from_user.id, username=message.from_user.username)
+class UserState(StatesGroup):
+    choosing_fio = State()
+    choosing_phone = State()
+    choosing_comment = State()
 
-    await message.answer(message.from_user.username, ', Добро пожаловать в компанию DamnIT')
+
+@router.message(CommandStart())
+async def start(message: types.Message, state: FSMContext):
+    await message.answer(message.from_user.username ', Добро пожаловать в компанию DamnIT')
     await message.answer('Напишите свое ФИО')
-    dp.register_message_handler(get_fio, content_types=types.ContentTypes.TEXT, user = user)
 
-async def get_fio(message: types.Message, user: User):
-    user.fio = message.text
+    await state.set_state(UserState.choosing_fio)
+
+@router.message(UserState.choosing_fio)
+async def get_fio(message: types.Message, state: FSMContext):
+    state.update_data(fio=message.text)
 
     await message.answer('Укажите Ваш номер телефона')
-    dp.register_message_handler(get_phone, content_types=types.ContentTypes.TEXT)
+    await state.set_state(UserState.choosing_phone)
 
-async def get_phone(message: types.Message, user: User):
-    user.phone = message.text
+@router.message(UserState.choosing_phone)
+async def get_phone(message: types.Message, state: FSMContext):
+    state.update_data(phone=message.text)
 
     await message.answer('Напишите любой комментарий')
-    dp.register_message_handler(get_comment, content_types=types.ContentTypes.TEXT, user = user)
+    await state.set_state(UserState.choosing_comment)
 
-async def get_comment(message: types.Message, user: User):
-    user.comment = message.text
+@router.message(UserState.choosing_comment)
+async def get_comment(message: types.Message, state: FSMContext):
+    state.update_data(comment=message.text)
 
     await message.answer('Последний шаг! Ознакомься с вводными положениями')
     await message.answer_document('file_id')
     await message.answer('Ознакомился?', reply_markup=markups.agreement)
-    dp.register_message_handler(get_confirmation, content_types=types.ContentTypes.TEXT, user = user)
 
-async def get_confirmation(message: types.Message, user: User):
+
+
+async def get_confirmation(message: types.Message, state: FSMContext):
     if message.text == 'Да!':
-        create_user(user) #делаем вид, что сохраняем пользователя в базу данных
 
         photo = types.InputFile('content/photo.jpg')
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
         await message.answer_photo('photo_id')
-
+        
+        user = User(**await state.get_data())
+        create_user(user) # Заглушка для создания пользователя в базе данных
         await bot.send_message(ADMIN_ID, f'Пользователь {user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
@@ -60,8 +73,13 @@ async def get_confirmation(message: types.Message, user: User):
         file = types.InputFile('content/test.jpg')
         await message.answer_document(file)
         
-        dp.register_message_handler(get_confirmation, content_types=types.ContentTypes.TEXT)
+        await state.set_state(UserState.choosing_comment)
+
+async def main():
+    dp = Dispatcher()
+    dp.include_router(router)
+
+    await dp.start_polling(bot)
 
 if __name__ == '__main__':
-    from aiogram import executor
-    executor.start_polling(dp)
+    asyncio.run(main())
