@@ -28,7 +28,7 @@ class UserState(StatesGroup):
 
 @router.message(CommandStart())
 async def start(message: types.Message, state: FSMContext):
-    await message.answer(message.from_user.username ', Добро пожаловать в компанию DamnIT')
+    await message.answer(message.from_user.username + ', Добро пожаловать в компанию DamnIT')
     await message.answer('Напишите свое ФИО')
 
     await state.set_state(UserState.choosing_fio)
