@@ -24,6 +24,7 @@ class UserState(StatesGroup):
     choosing_fio = State()
     choosing_phone = State()
     choosing_comment = State()
+    finishing = State()
 
 
 @router.message(CommandStart())
@@ -55,10 +56,13 @@ async def get_comment(message: types.Message, state: FSMContext):
     file = types.FSInputFile('bot/content/test.pdf')
     await message.answer_document(file)
     await message.answer('Ознакомился?', reply_markup=markups.aggreement)
+    await state.set_state(UserState.finishing)
 
 
 
+@router.message(UserState.finishing)
 async def get_confirmation(message: types.Message, state: FSMContext):
+    print(message.text == 'Да!', message.text)
     if message.text == 'Да!':
 
         photo = types.FSInputFile('botm/content/photo.jpg')
@@ -67,6 +71,8 @@ async def get_confirmation(message: types.Message, state: FSMContext):
         user = User(**await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
         await bot.send_message(ADMIN_ID, f'Пользователь {user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
+
+        state.clear()
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
         
@@ -74,6 +80,8 @@ async def get_confirmation(message: types.Message, state: FSMContext):
         await message.answer_document(file)
         
         await state.set_state(UserState.choosing_comment)
+
+    
 
 async def main():
     dp = Dispatcher()
