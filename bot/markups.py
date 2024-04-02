@@ -1,5 +1,5 @@
 from aiogram import types
 
 
-agreement = types.ReplyKeyboardMarkup(resize_keyboard=True)
-agreement.add(types.KeyboardButton('ДА!'))
+aggreement = types.ReplyKeyboardMarkup(resize_keyboard=True, keyboard=[])
+aggreement.keyboard.append([types.KeyboardButton(text='Да!')])
