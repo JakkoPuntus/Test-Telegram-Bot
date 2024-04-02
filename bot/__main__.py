@@ -32,25 +32,26 @@ async def start(message: types.Message, state: FSMContext):
     await message.answer(message.from_user.username + ', Добро пожаловать в компанию DamnIT')
     await message.answer('Напишите свое ФИО')
 
+    await state.update_data(user_id=message.from_user.id,username=message.from_user.username)
     await state.set_state(UserState.choosing_fio)
 
 @router.message(UserState.choosing_fio)
 async def get_fio(message: types.Message, state: FSMContext):
-    state.update_data(fio=message.text)
+    await state.update_data(fio=message.text)
 
     await message.answer('Укажите Ваш номер телефона')
     await state.set_state(UserState.choosing_phone)
 
 @router.message(UserState.choosing_phone)
 async def get_phone(message: types.Message, state: FSMContext):
-    state.update_data(phone=message.text)
+    await state.update_data(phone=message.text)
 
     await message.answer('Напишите любой комментарий')
     await state.set_state(UserState.choosing_comment)
 
 @router.message(UserState.choosing_comment)
 async def get_comment(message: types.Message, state: FSMContext):
-    state.update_data(comment=message.text)
+    await state.update_data(comment=message.text)
 
     await message.answer('Последний шаг! Ознакомься с вводными положениями')
     file = types.FSInputFile('bot/content/test.pdf')
@@ -65,14 +66,14 @@ async def get_confirmation(message: types.Message, state: FSMContext):
     print(message.text == 'Да!', message.text)
     if message.text == 'Да!':
 
-        photo = types.FSInputFile('botm/content/photo.jpg')
+        photo = types.FSInputFile('bot/content/photo.jpg')
         await message.answer_photo(photo, caption='Спасибо за успешную регистрацию')
-        
-        user = User(**await state.get_data())
+        print(await state.get_data())
+        user = User(** await state.get_data())
         create_user(user) # Заглушка для создания пользователя в базе данных
-        await bot.send_message(ADMIN_ID, f'Пользователь {user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
+        await bot.send_message(ADMIN_ID, f'Пользователь @{user.username} успешно зарегистрирован. Его ФИО: {user.fio}, номер телефона: {user.phone}, комментарий: {user.comment}')
 
-        state.clear()
+        await state.clear()
     else:
         await message.answer('Для завершения регистрации ознакомьтесь с вводными положениями')
         
